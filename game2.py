@@ -22,13 +22,13 @@ BLUE = (50, 50, 250)
 YELLOW = (255, 255, 0)
 CYAN = (0, 255, 255)
 ORANGE = (255, 165, 0)
-PURPLE = (160, 32, 240)
+PURPLE = (160, 32, 280)
 
 # Bintang latar belakang
 stars = [{"x": random.randint(0, WIDTH), "y": random.randint(0, HEIGHT), "radius": random.randint(1, 2)} for _ in range(100)]
 
 # Entity dan status
-player = pygame.Rect(WIDTH//2, HEIGHT//2, 40, 40)
+player = pygame.Rect(WIDTH//2, HEIGHT//2, 80, 80)
 player_health = 100
 max_health = 100
 player_level = 1
@@ -79,7 +79,7 @@ def draw_text(text, x, y, color=WHITE):
 def spawn_enemy():
     x = random.choice([0, WIDTH])
     y = random.randint(0, HEIGHT)
-    return {"rect": pygame.Rect(x, y, 30, 30), "health": 30, "damage": 10, "xp": 25}
+    return {"rect": pygame.Rect(x, y, 80, 80), "health": 30, "damage": 10, "xp": 25}
 
 def spawn_powerup():
     kind = random.choice(["heal", "xp", "weapon"])
