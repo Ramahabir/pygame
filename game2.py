@@ -1,10 +1,4 @@
-# Ini adalah game lanjutan: Battle Arena Advanced
-# Tambahan fitur:
-# - XP dan sistem level
-# - Upgrade skill
-# - Boss battle
-# - Sistem senjata berbeda
-# Catatan: Gambar tidak digunakan, hanya bentuk dan warna
+# Battle Arena Advanced + Background Luar Angkasa dengan Bintang Bergerak
 
 import pygame
 import sys
@@ -15,7 +9,7 @@ pygame.init()
 
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Battle Arena: XP & Boss")
+pygame.display.set_caption("Battle Arena: XP & Boss - Space Edition")
 clock = pygame.time.Clock()
 FPS = 60
 
@@ -30,13 +24,18 @@ CYAN = (0, 255, 255)
 ORANGE = (255, 165, 0)
 PURPLE = (160, 32, 240)
 
+# Bintang latar belakang
+stars = [{"x": random.randint(0, WIDTH), "y": random.randint(0, HEIGHT), "radius": random.randint(1, 2)} for _ in range(100)]
+
 # Entity dan status
-player = pygame.Rect(WIDTH//2, HEIGHT//2, 80, 80)
+player = pygame.Rect(WIDTH//2, HEIGHT//2, 40, 40)
 player_health = 100
 max_health = 100
 player_level = 1
 player_xp = 0
 xp_to_level = 100
+
+#Upload Gambar Mob
 player_img = pygame.image.load("player.png")  # Gambar pemain (tidak digunakan dalam kode ini)
 player_img = pygame.transform.scale(player_img, (80, 80))
 
@@ -45,9 +44,6 @@ enemy_img = pygame.transform.scale(enemy_img, (80, 80))
 
 boss_img = pygame.image.load("boss.png")  # Gambar pemain (tidak digunakan dalam kode ini)
 boss_img = pygame.transform.scale(boss_img, (80, 80))
-
-# player_img = pygame.image.load("player.png")  # Gambar pemain (tidak digunakan dalam kode ini)
-# player_img = pygame.transform.scale(player_img, (40, 40))
 
 skills = {
     "fire_rate": 1,
@@ -83,7 +79,7 @@ def draw_text(text, x, y, color=WHITE):
 def spawn_enemy():
     x = random.choice([0, WIDTH])
     y = random.randint(0, HEIGHT)
-    return {"rect": pygame.Rect(x, y, 80, 80), "health": 30, "damage": 10, "xp": 25}
+    return {"rect": pygame.Rect(x, y, 30, 30), "health": 30, "damage": 10, "xp": 25}
 
 def spawn_powerup():
     kind = random.choice(["heal", "xp", "weapon"])
@@ -101,8 +97,17 @@ def level_up():
 running = True
 while running:
     clock.tick(FPS)
-    screen.fill(BLACK)
 
+    # Gambar background luar angkasa dengan bintang bergerak
+    screen.fill((0, 0, 20))  # Biru gelap
+    for star in stars:
+        pygame.draw.circle(screen, WHITE, (star["x"], star["y"]), star["radius"])
+        star["y"] += 1
+        if star["y"] > HEIGHT:
+            star["y"] = 0
+            star["x"] = random.randint(0, WIDTH)
+
+    # Input pemain
     keys = pygame.key.get_pressed()
     dx = dy = 0
     if keys[pygame.K_w]: dy = -skills["speed"]
@@ -209,7 +214,7 @@ while running:
         player_xp -= xp_to_level
         level_up()
 
-    # Draw section
+    # Draw entities
     screen.blit(player_img, player.topleft)
     draw_health_bar(player.x, player.y - 15, player_health, max_health)
 
@@ -220,8 +225,9 @@ while running:
     for proj in projectiles:
         pygame.draw.rect(screen, ORANGE, proj["rect"])
 
+    # UI
     draw_text(f"HP: {player_health}", 10, 10)
-    draw_text(f"XP: {player_xp}/{xp_to_level}", 10, 30)  
+    draw_text(f"XP: {player_xp}/{xp_to_level}", 10, 30)
     draw_text(f"Level: {player_level}", 10, 50)
     draw_text(f"Weapon: {current_weapon}", 10, 70)
 
