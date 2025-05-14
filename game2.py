@@ -66,7 +66,7 @@ weapons = {
     "sniper": {"speed": 15, "cooldown": 40, "damage": 25}
 }
 
-current_weapon = None  # Player starts with no weapon
+current_weapon = "basic"  # Player starts with no weapon
 weapon_cooldown = 0
 
 projectiles = []
@@ -97,6 +97,35 @@ shop_items = {
 player_gold = 0
 shop_active = False
 selected_item = 0
+
+# Pause menu variables
+pause_menu_active = False
+pause_selected_option = 0
+
+def draw_pause_menu():
+    # Draw semi-transparent background
+    pause_bg = pygame.Surface((WIDTH, HEIGHT))
+    pause_bg.fill(BLACK)
+    pause_bg.set_alpha(180)
+    screen.blit(pause_bg, (0, 0))
+    
+    # Draw pause menu panel
+    panel_rect = pygame.Rect(WIDTH//4, HEIGHT//4 - 50, WIDTH//2, HEIGHT//2)
+    pygame.draw.rect(screen, BLACK, panel_rect)
+    pygame.draw.rect(screen, WHITE, panel_rect, 2)
+    
+    # Draw pause menu title
+    draw_text("PAUSED", WIDTH//2 - 50, HEIGHT//4 - 30, WHITE, True)
+    
+    # Menu options
+    options = ["Resume", "Restart", "Quit"]
+    for i, option in enumerate(options):
+        y_pos = HEIGHT//4 + 50 + i * 60
+        color = CYAN if i == pause_selected_option else WHITE
+        if i == pause_selected_option:
+            pygame.draw.rect(screen, GRAY, (WIDTH//4, y_pos - 5, WIDTH//2, 40))
+        draw_text(option, WIDTH//2 - 40, y_pos, color)
+
 
 def draw_health_bar(x, y, health, max_health):
     pygame.draw.rect(screen, RED, (x, y, 100, 10))
@@ -212,8 +241,8 @@ while running:
             star["y"] = 0
             star["x"] = random.randint(0, WIDTH)
 
-    # Input pemain (only if shop is not active)
-    if not shop_active:
+    # Input pemain (only if shop is not active and pause menu not active)
+    if not shop_active and not pause_menu_active:
         keys = pygame.key.get_pressed()
         dx = dy = 0
         if keys[pygame.K_w]: dy = -skills["speed"]
@@ -222,14 +251,49 @@ while running:
         if keys[pygame.K_d]: dx = skills["speed"]
 
         player.move_ip(dx, dy)
-        player.clamp_ip(screen.get_rect())
+        player.clamp_ip(screen.get_rect()) 
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:  # Toggle shop
+            if event.key == pygame.K_p and not pause_menu_active:  # Toggle shop only if pause menu not active
                 shop_active = not shop_active
+            
+            # Pause menu toggle with ESC key (only if shop not active)
+            if event.key == pygame.K_ESCAPE and not shop_active:
+                pause_menu_active = not pause_menu_active
+                pause_selected_option = 0  # Reset selection when toggling pause menu
+            
+            if pause_menu_active:
+                if event.key == pygame.K_UP:
+                    pause_selected_option = (pause_selected_option - 1) % 3
+                elif event.key == pygame.K_DOWN:
+                    pause_selected_option = (pause_selected_option + 1) % 3
+                elif event.key == pygame.K_RETURN:
+                    if pause_selected_option == 0:  # Resume
+                        pause_menu_active = False
+                    elif pause_selected_option == 1:  # Restart
+                        # Reset game state variables
+                        player.x, player.y = WIDTH//2, HEIGHT//2
+                        player_health = max_health
+                        player_level = 1
+                        player_xp = 0
+                        xp_to_level = 100
+                        skills["fire_rate"] = 1
+                        skills["projectile_damage"] = 10
+                        skills["speed"] = 5
+                        current_weapon = "basic"
+                        weapon_cooldown = 0
+                        projectiles.clear()
+                        enemies.clear()
+                        powerups.clear()
+                        boss = None
+                        spawn_timer = 0
+                        boss_spawned = False
+                        pause_menu_active = False
+                    elif pause_selected_option == 2:  # Quit
+                        running = False
             
             # Shop controls
             if shop_active:
@@ -246,8 +310,8 @@ while running:
             if event.button == 3:  # Right click
                 orb_active = not orb_active  # Toggle orbs
 
-    # Only allow shooting if shop is not active and player has a weapon
-    if not shop_active and current_weapon:
+    # Only allow shooting if shop is not active and pause menu not active and player has a weapon
+    if not shop_active and not pause_menu_active and current_weapon:
         if keys[pygame.K_SPACE] and weapon_cooldown == 0:
             mx, my = pygame.mouse.get_pos()
             angle = math.atan2(my - player.centery, mx - player.centerx)
@@ -265,8 +329,8 @@ while running:
     if weapon_cooldown > 0:
         weapon_cooldown -= 1
 
-    # Only update projectiles and enemies if shop is not active
-    if not shop_active:
+    # Only update projectiles and enemies if shop is not active and pause menu not active
+    if not shop_active and not pause_menu_active:
         for proj in projectiles[:]:
             proj["rect"].x += proj["dx"]
             proj["rect"].y += proj["dy"]
@@ -292,8 +356,8 @@ while running:
                     projectiles.remove(proj)
                     break
 
-    # Only update boss if shop is not active
-    if not shop_active:
+    # Only update boss if shop is not active and pause menu not active
+    if not shop_active and not pause_menu_active:
         if not boss_spawned and player_level >= 5:
             boss = {"rect": pygame.Rect(100, 100, 80, 80), "health": 500, "damage": 20}
             boss_spawned = True
@@ -316,8 +380,8 @@ while running:
             screen.blit(boss_img, boss["rect"].topleft)
             draw_health_bar(boss["rect"].x, boss["rect"].y - 10, boss["health"], 500)
 
-    # Only spawn enemies if shop is not active
-    if not shop_active:
+    # Only spawn enemies if shop is not active and pause menu not active
+    if not shop_active and not pause_menu_active:
         spawn_timer += 1
         if spawn_timer >= 60:
             enemies.append(spawn_enemy())
@@ -341,8 +405,8 @@ while running:
         player_xp -= xp_to_level
         level_up()
 
-    # Update game state only if shop is not active
-    if not shop_active:
+    # Update game state only if shop is not active and pause menu not active
+    if not shop_active and not pause_menu_active:
         # Update and draw orbs
         if orb_active:
             # Update orb positions
@@ -378,9 +442,12 @@ while running:
 
         for proj in projectiles:
             pygame.draw.rect(screen, ORANGE, proj["rect"])
-    else:
+    elif shop_active:
         # Draw shop UI when active
         draw_shop()
+    elif pause_menu_active:
+        # Draw pause menu UI when active
+        draw_pause_menu()
 
     # UI
     draw_text(f"HP: {player_health}", 10, 10)
